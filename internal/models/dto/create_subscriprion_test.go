@@ -12,12 +12,12 @@ import (
 func TestCreateSubscriptions_Validate(t *testing.T) {
 	testCase := []struct {
 		name    string
-		dto     *dto.RequestCreateSubscriptions
+		dto     *dto.CreateSubscriptionsRequest
 		wantErr error
 	}{
 		{
 			name: "valid_test_1_not_end_dd-mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -26,7 +26,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "valid_test_2_not_end_mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -35,7 +35,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "valid_test_3_end_date_dd-mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -45,7 +45,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "valid_test_4_end_date_mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -56,7 +56,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 
 		{
 			name: "invalid_1_no_service_name",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				Price:     300,
 				UserID:    uuid.NewString(),
 				StartDate: "01-01-2025",
@@ -66,7 +66,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_2_price<0",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       -1,
 				UserID:      uuid.NewString(),
@@ -77,7 +77,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_3_price==0",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       0,
 				UserID:      uuid.NewString(),
@@ -88,7 +88,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_4_id_empty",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				StartDate:   "01-2025",
@@ -98,7 +98,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_5_user_id_not_uuid",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      "asdd",
@@ -109,7 +109,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_6_no_start_date",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -118,7 +118,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_7_start_date_empty",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -128,7 +128,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid_8_end_date_empty",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -155,7 +155,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 	}
 }
 
-func TestCreateSubscriptions_ParseStartDate(t *testing.T) {
+func TestParseStartDate(t *testing.T) {
 	testCases := []struct {
 		name       string
 		date       string
@@ -294,7 +294,7 @@ func TestParceEndDate(t *testing.T) {
 func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 	testCases := []struct {
 		name        string
-		dto         *dto.RequestCreateSubscriptions
+		dto         *dto.CreateSubscriptionsRequest
 		wantErr     error
 		wantIsEnded bool
 		expectedEnd bool
@@ -303,7 +303,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 	}{
 		{
 			name: "normal_1_is_ended",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       300,
 				UserID:      uuid.NewString(),
@@ -317,7 +317,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "normal_2_not_ended",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "WB Club",
 				Price:       99,
 				UserID:      uuid.NewString(),
@@ -331,7 +331,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "end_before_start_dd-mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				StartDate: "01-01-2025",
 				EndDate:   getPtrStr("31-12-2024"),
 			},
@@ -339,7 +339,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "end_equal_start_mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Music",
 				Price:       399,
 				UserID:      uuid.NewString(),
@@ -353,7 +353,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "february_leap_year_mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Netflix",
 				Price:       599,
 				UserID:      uuid.NewString(),
@@ -367,7 +367,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "february_non_leap_year_mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Netflix",
 				Price:       599,
 				UserID:      uuid.NewString(),
@@ -381,7 +381,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "december_to_january_mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Spotify",
 				Price:       199,
 				UserID:      uuid.NewString(),
@@ -395,7 +395,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "year_boundary_dd-mm-yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Apple Music",
 				Price:       299,
 				UserID:      uuid.NewString(),
@@ -409,7 +409,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "mixed_formats_start_dd_mm_yyyy_end_mm_yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Yandex Plus",
 				Price:       399,
 				UserID:      uuid.NewString(),
@@ -423,7 +423,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "mixed_formats_start_mm_yyyy_end_dd_mm_yyyy",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "YouTube Premium",
 				Price:       349,
 				UserID:      uuid.NewString(),
@@ -437,7 +437,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "no_end_date_lifetime_subscription",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Microsoft 365",
 				Price:       3999,
 				UserID:      uuid.NewString(),
@@ -450,17 +450,17 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "invalid_start_date_yyyy_mm_dd",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Test",
 				Price:       100,
 				UserID:      uuid.NewString(),
-				StartDate:   "2025-01-01", // Неправильный формат (YYYY-MM-DD)
+				StartDate:   "2025-01-01",
 			},
 			wantErr: fmt.Errorf("invalid start_date format"),
 		},
 		{
 			name: "invalid_end_date_with_slashes",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Test",
 				Price:       100,
 				UserID:      uuid.NewString(),
@@ -471,7 +471,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 		},
 		{
 			name: "end_date_in_wrong_order_yyyy_mm_dd",
-			dto: &dto.RequestCreateSubscriptions{
+			dto: &dto.CreateSubscriptionsRequest{
 				ServiceName: "Test",
 				Price:       100,
 				UserID:      uuid.NewString(),

@@ -1,8 +1,11 @@
-package entities_data_base
+package entities
 
-import "time"
+import (
+	"time"
+)
 
-type CreateNewSubscriptions struct {
+type ReadSubscription struct {
+	SubscribeID string
 	UserID      string
 	ServiceName string
 	Price       int

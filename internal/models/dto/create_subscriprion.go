@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Piccadilly98/subscription_service/internal/models/entities_data_base"
+	"github.com/Piccadilly98/subscription_service/internal/models/entities"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +13,7 @@ const (
 	layoutNotContainsDay = "01-2006"
 )
 
-type RequestCreateSubscriptions struct {
+type CreateSubscriptionsRequest struct {
 	ServiceName string  `json:"service_name"`
 	Price       int     `json:"price"`
 	UserID      string  `json:"user_id"`
@@ -21,7 +21,7 @@ type RequestCreateSubscriptions struct {
 	EndDate     *string `json:"end_date"`
 }
 
-func (c *RequestCreateSubscriptions) Validate() error {
+func (c *CreateSubscriptionsRequest) Validate() error {
 	if c.Price <= 0 {
 		return fmt.Errorf("price cannot be <= 0")
 	}
@@ -43,7 +43,7 @@ func (c *RequestCreateSubscriptions) Validate() error {
 	return nil
 }
 
-func (c *RequestCreateSubscriptions) ToEntitie() (*entities_data_base.CreateNewSubscriptions, error) {
+func (c *CreateSubscriptionsRequest) ToEntitie() (*entities.CreateNewSubscriptions, error) {
 	var dateStart time.Time
 	var endDate *time.Time
 	var isEnded bool
@@ -69,7 +69,7 @@ func (c *RequestCreateSubscriptions) ToEntitie() (*entities_data_base.CreateNewS
 		}
 	}
 
-	model := &entities_data_base.CreateNewSubscriptions{
+	model := &entities.CreateNewSubscriptions{
 		UserID:      c.UserID,
 		IsEnded:     isEnded,
 		Price:       c.Price,
@@ -78,30 +78,4 @@ func (c *RequestCreateSubscriptions) ToEntitie() (*entities_data_base.CreateNewS
 		ServiceName: c.ServiceName,
 	}
 	return model, nil
-}
-
-func ParceStartDate(date string) (time.Time, error) {
-	dateStart, err := time.Parse(layoutWithDay, date)
-	if err != nil {
-		dateStart, err = time.Parse(layoutNotContainsDay, date)
-		if err != nil {
-			return time.Time{}, fmt.Errorf("invalid start_date format")
-		}
-		date := time.Date(dateStart.Year(), dateStart.Month(), 1, 0, 0, 0, 0, dateStart.Location())
-		dateStart = date
-	}
-	return dateStart, nil
-}
-
-func ParceEndDate(date string) (*time.Time, error) {
-	endDate, err := time.Parse(layoutWithDay, date)
-	if err != nil {
-		endDate, err = time.Parse(layoutNotContainsDay, date)
-		if err != nil {
-			return nil, fmt.Errorf("invalid end_date format")
-		}
-		end := time.Date(endDate.Year(), endDate.Month()+1, endDate.Day()-1, 0, 0, 0, 0, endDate.Location())
-		endDate = end
-	}
-	return &endDate, nil
 }
