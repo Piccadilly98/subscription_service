@@ -1,9 +1,10 @@
 package dto
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/Piccadilly98/subscription_service/internal/models/entities_data_base"
+	"github.com/Piccadilly98/subscription_service/internal/models/entities"
 )
 
 const (
@@ -22,10 +23,17 @@ type SubscriptionResponse struct {
 	Status      string  `json:"status"`
 }
 
-func FromEntity(entity *entities_data_base.ReadSubscription) *SubscriptionResponse {
+func FromEntityToSubResp(entity *entities.ReadSubscription) *SubscriptionResponse {
 	now := time.Now()
 	status := ""
-	if entity.StartDate.Before(now) {
+	if time.Date(entity.StartDate.Year(), entity.StartDate.Month(), entity.StartDate.Day(), 0, 0, 0, 0, time.UTC).Equal(time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		0, 0, 0, 0, time.UTC,
+	)) {
+		status = StatusActive
+	} else if entity.StartDate.Before(now) {
 		if entity.EndDate != nil && entity.EndDate.Before(now) {
 			status = StatusEnded
 		} else if entity.EndDate == nil ||
@@ -35,12 +43,21 @@ func FromEntity(entity *entities_data_base.ReadSubscription) *SubscriptionRespon
 	} else {
 		status = StatusNotStarted
 	}
+	var dateEnd *string
+	dateStart := ""
+	if entity.EndDate != nil {
+		end := fmt.Sprintf("%02d-%02d-%d", entity.EndDate.Day(), entity.EndDate.Month(), entity.EndDate.Year())
+		dateEnd = &end
+	}
+	dateStart = fmt.Sprintf("%02d-%02d-%d", entity.StartDate.Day(), entity.StartDate.Month(), entity.StartDate.Year())
 	dto := &SubscriptionResponse{
 		SubscribeID: entity.SubscribeID,
 		UserID:      entity.UserID,
 		ServiceName: entity.ServiceName,
 		Price:       entity.Price,
 		Status:      status,
+		EndDate:     dateEnd,
+		StartDate:   dateStart,
 	}
 	return dto
 }
