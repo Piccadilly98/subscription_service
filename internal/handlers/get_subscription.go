@@ -2,32 +2,33 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
+	error_worker "github.com/Piccadilly98/subscription_service/internal/errorWorker"
 	"github.com/Piccadilly98/subscription_service/internal/service"
 )
 
 type GetSubscriptionHandler struct {
-	service *service.Service
+	service   *service.Service
+	errWorker *error_worker.ErrorWorker
 }
 
-func NewGetHandler(s *service.Service) *GetSubscriptionHandler {
+func NewGetHandler(s *service.Service, errWorker *error_worker.ErrorWorker) *GetSubscriptionHandler {
 	return &GetSubscriptionHandler{
-		service: s,
+		service:   s,
+		errWorker: errWorker,
 	}
 }
 
 func (g *GetSubscriptionHandler) Handler(w http.ResponseWriter, r *http.Request) {
-	id := chekcURLParam(w, r)
+	id := checkURLParam(w, r)
 	if id == "" {
 		return
 	}
 
 	exist, err := g.service.GetExsistBySubID(r.Context(), id)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(g.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 
@@ -38,15 +39,13 @@ func (g *GetSubscriptionHandler) Handler(w http.ResponseWriter, r *http.Request)
 	}
 	body, err := g.service.GetSubInfoDTOByID(r.Context(), id)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(g.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 
 	b, err := json.Marshal(body)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(g.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 	w.Header().Set(HeaderContentType, HeaderJson)

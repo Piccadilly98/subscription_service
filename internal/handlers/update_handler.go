@@ -6,30 +6,34 @@ import (
 	"log"
 	"net/http"
 
+	error_worker "github.com/Piccadilly98/subscription_service/internal/errorWorker"
 	"github.com/Piccadilly98/subscription_service/internal/models/dto"
 	"github.com/Piccadilly98/subscription_service/internal/service"
 )
 
 type UpdateHandler struct {
-	serv *service.Service
+	serv      *service.Service
+	errWorker *error_worker.ErrorWorker
 }
 
-func NewUpdateHandler(serv *service.Service) *UpdateHandler {
-	return &UpdateHandler{serv: serv}
+func NewUpdateHandler(serv *service.Service, errWorker *error_worker.ErrorWorker) *UpdateHandler {
+	return &UpdateHandler{
+		serv:      serv,
+		errWorker: errWorker,
+	}
 }
 
 func (u *UpdateHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	if !checkHeaderJson(w, r) {
 		return
 	}
-	id := chekcURLParam(w, r)
+	id := checkURLParam(w, r)
 	if id == "" {
 		return
 	}
 	exist, err := u.serv.GetExsistBySubID(r.Context(), id)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 	if !exist {
@@ -48,22 +52,19 @@ func (u *UpdateHandler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	err = u.serv.UpdateSubscription(r.Context(), body, id)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 
 	info, err := u.serv.GetSubInfoDTOByID(r.Context(), id)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 
 	b, err := json.Marshal(info)
 	if err != nil {
-		log.Println(err)
-		errorResponse(w, err, http.StatusInternalServerError)
+		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
 		return
 	}
 	w.Header().Set(HeaderContentType, HeaderJson)

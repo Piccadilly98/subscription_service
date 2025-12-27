@@ -63,7 +63,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "01-01-2025",
 				EndDate:     "01-01-2026",
 			},
-			expectedError: fmt.Errorf("user_id is not uuid"),
+			expectedError: fmt.Errorf("[USER]user_id is not uuid"),
 		},
 		{
 			name: "invalid_user_id_empty",
@@ -73,7 +73,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "01-01-2025",
 				EndDate:     "01-01-2026",
 			},
-			expectedError: fmt.Errorf("user_id is not uuid"),
+			expectedError: fmt.Errorf("[USER]user_id is not uuid"),
 		},
 		{
 			name: "invalid_no_end_date",
@@ -82,7 +82,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				ServiceName: getPtrStr("random"),
 				StartDate:   "01-01-2025",
 			},
-			expectedError: fmt.Errorf("no contains end_period_date"),
+			expectedError: fmt.Errorf("[USER]no contains end_period_date"),
 		},
 		{
 			name: "invalid_no_start_date",
@@ -92,7 +92,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "",
 				EndDate:     "01-01-2025",
 			},
-			expectedError: fmt.Errorf("no contains start_period_date"),
+			expectedError: fmt.Errorf("[USER]no contains start_period_date"),
 		},
 		{
 			name: "invalid_no_dates",
@@ -100,7 +100,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				UserID:      getPtrStr(uuid.NewString()),
 				ServiceName: getPtrStr("random"),
 			},
-			expectedError: fmt.Errorf("no contains period dates"),
+			expectedError: fmt.Errorf("[USER]no contains period dates"),
 		},
 		{
 			name: "invalid_invalid_format_start_date_dd-mm-yyyy",
@@ -110,7 +110,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "01/01/2000",
 				EndDate:     "01-01-2026",
 			},
-			expectedError: fmt.Errorf("invalid start_date format"),
+			expectedError: fmt.Errorf("[USER]invalid start_date format"),
 		},
 		{
 			name: "invalid_invalid_format_start_date_mm-yyyy",
@@ -120,7 +120,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "01/2000",
 				EndDate:     "01-01-2026",
 			},
-			expectedError: fmt.Errorf("invalid start_date format"),
+			expectedError: fmt.Errorf("[USER]invalid start_date format"),
 		},
 		{
 			name: "invalid_invalid_format_start_date_random",
@@ -130,7 +130,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "random",
 				EndDate:     "01-01-2026",
 			},
-			expectedError: fmt.Errorf("invalid start_date format"),
+			expectedError: fmt.Errorf("[USER]invalid start_date format"),
 		},
 
 		{
@@ -141,7 +141,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "01-01-2000",
 				EndDate:     "01/01/2026",
 			},
-			expectedError: fmt.Errorf("invalid end_date format"),
+			expectedError: fmt.Errorf("[USER]invalid end_date format"),
 		},
 		{
 			name: "invalid_invalid_format_end_date_mm-yyyy",
@@ -151,7 +151,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "01-01-2000",
 				EndDate:     "01/2026",
 			},
-			expectedError: fmt.Errorf("invalid end_date format"),
+			expectedError: fmt.Errorf("[USER]invalid end_date format"),
 		},
 		{
 			name: "invalid_invalid_format_end_date_random",
@@ -161,7 +161,7 @@ func TestQuerySummary_ToEntitie(t *testing.T) {
 				StartDate:   "14-12-2025",
 				EndDate:     "random",
 			},
-			expectedError: fmt.Errorf("invalid end_date format"),
+			expectedError: fmt.Errorf("[USER]invalid end_date format"),
 		},
 	}
 

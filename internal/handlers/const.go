@@ -10,4 +10,8 @@ const (
 	QueryServiceName = "service_name"
 	QueryStartDate   = "start_date"
 	QueryEndDate     = "end_date"
+
+	ErrorInvalidBody    = "invalid body"
+	ErrorInvalidQuery   = "invalid query parametrs"
+	ErrorInvalidRequest = "invalid request"
 )
