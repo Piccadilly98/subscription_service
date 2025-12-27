@@ -14,15 +14,14 @@ type CreateSubsriptionHandler struct {
 	service *service.Service
 }
 
-func NewCreateHeandler(s *service.Service) *CreateSubsriptionHandler {
+func NewCreateHandler(s *service.Service) *CreateSubsriptionHandler {
 	return &CreateSubsriptionHandler{
 		service: s,
 	}
 }
 
-func (c *CreateSubsriptionHandler) Hander(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get(HeaderContentType) != HeaderJson {
-		errorResponse(w, fmt.Errorf("invalid header content-type"), http.StatusBadRequest)
+func (c *CreateSubsriptionHandler) Handler(w http.ResponseWriter, r *http.Request) {
+	if !checkHeaderJson(w, r) {
 		return
 	}
 

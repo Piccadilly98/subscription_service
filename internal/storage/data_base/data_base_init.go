@@ -37,8 +37,12 @@ func (db *DataBase) Close() error {
 	return db.db.Close()
 }
 
-func (db *DataBase) Ping() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (db *DataBase) PingWithTimeout(duration time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
+	return db.db.PingContext(ctx)
+}
+
+func (db *DataBase) PingWithCtx(ctx context.Context) error {
 	return db.db.PingContext(ctx)
 }

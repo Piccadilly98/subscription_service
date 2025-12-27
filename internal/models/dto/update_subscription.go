@@ -28,8 +28,10 @@ func (u *UpdateSubscriptionRequest) Validate() error {
 		if *u.EndDate == "" {
 			return fmt.Errorf("end_date cannot be empty")
 		}
+		if u.Ended != nil {
+			return fmt.Errorf("cannot specify both end_date and ended")
+		}
 	}
-
 	return nil
 }
 
