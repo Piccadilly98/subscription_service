@@ -61,9 +61,6 @@ func (c *CreateSubscriptionsRequest) ToEntitie() (*entities.CreateNewSubscriptio
 		if endDate.Before(dateStart) {
 			return nil, fmt.Errorf("end_date cannot be before start_date")
 		}
-		if endDate.Compare(dateStart) == 0 {
-			return nil, fmt.Errorf("end_date most be == start_date")
-		}
 		if endDate.Before(time.Now()) {
 			isEnded = true
 		}

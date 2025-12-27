@@ -150,6 +150,10 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				} else {
 					t.Errorf("unexpected error: %s\n", err.Error())
 				}
+			} else {
+				if tc.wantErr != nil {
+					t.Errorf("ERROR: got: nil, expect: %s\n", tc.wantErr.Error())
+				}
 			}
 		})
 	}
@@ -218,6 +222,10 @@ func TestParseStartDate(t *testing.T) {
 					t.Errorf("unexpected error: %s\n", err.Error())
 				}
 				return
+			} else {
+				if tc.wantErr != nil {
+					t.Errorf("ERROR: got: nil, expect: %s\n", tc.wantErr.Error())
+				}
 			}
 
 			if res.Compare(tc.wantedDate) != 0 {
@@ -497,6 +505,10 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 					t.Errorf("unepected res\n")
 				}
 				return
+			} else {
+				if tc.wantErr != nil {
+					t.Errorf("ERROR: got: nil, expect: %s\n", tc.wantErr.Error())
+				}
 			}
 			if res.IsEnded != tc.wantIsEnded {
 				t.Errorf("IsEnded: got: %v, expect: %v\n", res.IsEnded, tc.wantIsEnded)
@@ -524,8 +536,4 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 			}
 		})
 	}
-}
-
-func getPtrStr(str string) *string {
-	return &str
 }

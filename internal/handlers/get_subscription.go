@@ -2,11 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Piccadilly98/subscription_service/internal/service"
-	"github.com/go-chi/chi/v5"
 )
 
 type GetSubscriptionHandler struct {
@@ -20,30 +19,33 @@ func NewGetHandler(s *service.Service) *GetSubscriptionHandler {
 }
 
 func (g *GetSubscriptionHandler) Handler(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, URLParam)
+	id := chekcURLParam(w, r)
 	if id == "" {
-		errorResponse(w, fmt.Errorf("invalid id"), http.StatusBadRequest)
 		return
 	}
 
 	exist, err := g.service.GetExsistBySubID(r.Context(), id)
 	if err != nil {
+		log.Println(err)
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	if !exist {
-		errorResponse(w, fmt.Errorf("invalid id"), http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("404 page not found"))
 		return
 	}
 	body, err := g.service.GetSubInfoDTOByID(r.Context(), id)
 	if err != nil {
+		log.Println(err)
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	b, err := json.Marshal(body)
 	if err != nil {
+		log.Println(err)
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
 	}

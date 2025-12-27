@@ -24,25 +24,8 @@ type SubscriptionResponse struct {
 }
 
 func FromEntityToSubResp(entity *entities.ReadSubscription) *SubscriptionResponse {
-	now := time.Now()
-	status := ""
-	if time.Date(entity.StartDate.Year(), entity.StartDate.Month(), entity.StartDate.Day(), 0, 0, 0, 0, time.UTC).Equal(time.Date(
-		now.Year(),
-		now.Month(),
-		now.Day(),
-		0, 0, 0, 0, time.UTC,
-	)) {
-		status = StatusActive
-	} else if entity.StartDate.Before(now) {
-		if entity.EndDate != nil && entity.EndDate.Before(now) {
-			status = StatusEnded
-		} else if entity.EndDate == nil ||
-			(entity.EndDate != nil && !entity.EndDate.Before(now)) {
-			status = StatusActive
-		}
-	} else {
-		status = StatusNotStarted
-	}
+	status := processingStatus(entity)
+
 	var dateEnd *string
 	dateStart := ""
 	if entity.EndDate != nil {
@@ -60,4 +43,23 @@ func FromEntityToSubResp(entity *entities.ReadSubscription) *SubscriptionRespons
 		StartDate:   dateStart,
 	}
 	return dto
+}
+
+func processingStatus(entity *entities.ReadSubscription) string {
+	nowTime := time.Now()
+	now := time.Date(nowTime.Year(), nowTime.Month(), nowTime.Day(), 0, 0, 0, 0, time.UTC)
+	startDateDay := time.Date(entity.StartDate.Year(), entity.StartDate.Month(), entity.StartDate.Day(), 0, 0, 0, 0, time.UTC)
+	if startDateDay.After(now) {
+		return StatusNotStarted
+	}
+
+	if entity.EndDate != nil {
+		if entity.EndDate.Before(now) {
+			return StatusEnded
+		} else {
+			return StatusActive
+		}
+	} else {
+		return StatusActive
+	}
 }
