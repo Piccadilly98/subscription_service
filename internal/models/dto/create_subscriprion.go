@@ -23,22 +23,22 @@ type CreateSubscriptionsRequest struct {
 
 func (c *CreateSubscriptionsRequest) Validate() error {
 	if c.Price <= 0 {
-		return fmt.Errorf("price cannot be <= 0")
+		return fmt.Errorf("[USER]price cannot be <= 0")
 	}
 	if c.ServiceName == "" {
-		return fmt.Errorf("service_name cannot be empty")
+		return fmt.Errorf("[USER]service_name cannot be empty")
 	}
 	if c.StartDate == "" {
-		return fmt.Errorf("start_date cannot be empty")
+		return fmt.Errorf("[USER]start_date cannot be empty")
 	}
 	if c.UserID == "" {
-		return fmt.Errorf("user_id cannot be empty")
+		return fmt.Errorf("[USER]user_id cannot be empty")
 	}
 	if _, err := uuid.Parse(c.UserID); err != nil {
-		return fmt.Errorf("user_id is not uuid")
+		return fmt.Errorf("[USER]user_id is not uuid")
 	}
 	if c.EndDate != nil && *c.EndDate == "" {
-		return fmt.Errorf("end_date cannot be empty")
+		return fmt.Errorf("[USER]end_date cannot be empty")
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ func (c *CreateSubscriptionsRequest) ToEntitie() (*entities.CreateNewSubscriptio
 		}
 
 		if endDate.Before(dateStart) {
-			return nil, fmt.Errorf("end_date cannot be before start_date")
+			return nil, fmt.Errorf("[USER]end_date cannot be before start_date")
 		}
 		if endDate.Before(time.Now()) {
 			isEnded = true

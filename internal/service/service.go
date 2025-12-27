@@ -5,20 +5,28 @@ import (
 	"fmt"
 	"time"
 
+	logger "github.com/Piccadilly98/subscription_service/internal/loger"
 	dto "github.com/Piccadilly98/subscription_service/internal/models/dto"
 	"github.com/Piccadilly98/subscription_service/internal/storage"
 )
 
+const (
+	LevelForChangedSubs = "important"
+	LevelForDeleteSubs  = "warning"
+)
+
 type Service struct {
-	storage *storage.Storage
+	storage      *storage.Storage
+	changeLogger *logger.Logger
 }
 
-func NewService(st *storage.Storage) (*Service, error) {
+func NewService(st *storage.Storage, changeLogger *logger.Logger) (*Service, error) {
 	if st == nil {
 		return nil, fmt.Errorf("storage connot be nil")
 	}
 	return &Service{
-		storage: st,
+		storage:      st,
+		changeLogger: changeLogger,
 	}, nil
 }
 
@@ -37,28 +45,29 @@ func (s *Service) CreateSubsription(ctx context.Context, req *dto.CreateSubscrip
 	if err != nil {
 		return nil, err
 	}
-	s.storage.Cache.AddToCacheByID(id)
+	if s.storage.Cache != nil {
+		s.storage.Cache.AddToCacheByID(id)
+	}
 	entitie, err := s.storage.Db.GetSubscriptionByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-
+	s.changeLogger.Printf(LevelForChangedSubs, "create new subscription with id: %s", id)
 	res := dto.FromEntityToSubResp(entitie)
 	return res, nil
 }
 
 func (s *Service) GetExsistBySubID(ctx context.Context, id string) (bool, error) {
-	if s.storage.Cache.CheckBySubID(id) {
-		fmt.Println("взяли из кэша")
-		return true, nil
+	if s.storage.Cache != nil {
+		if s.storage.Cache.CheckBySubID(id) {
+			return true, nil
+		}
 	}
-
 	exists, err := s.storage.Db.GetExsistBySubID(ctx, id)
 	if err != nil {
 		return false, err
 	}
-
-	if exists {
+	if exists && s.storage.Cache != nil {
 		s.storage.Cache.AddToCacheByID(id)
 	}
 
@@ -70,7 +79,9 @@ func (s *Service) GetSubInfoDTOByID(ctx context.Context, id string) (*dto.Subscr
 	if err != nil {
 		return nil, err
 	}
-
+	if s.storage.Cache != nil {
+		s.storage.Cache.AddToCacheByID(id)
+	}
 	res := dto.FromEntityToSubResp(entitie)
 	return res, nil
 }
@@ -116,7 +127,10 @@ func (s *Service) UpdateSubscription(ctx context.Context, body *dto.UpdateSubscr
 	if err != nil {
 		return err
 	}
-	s.storage.Cache.AddToCacheByID(id)
+	s.changeLogger.Printf(LevelForChangedSubs, "update subscription with id: %s", id)
+	if s.storage.Cache != nil {
+		s.storage.Cache.AddToCacheByID(id)
+	}
 	return nil
 }
 
@@ -125,7 +139,10 @@ func (s *Service) DeleteSubByID(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	s.storage.Cache.DeleteByID(id)
+	s.changeLogger.Printf(LevelForDeleteSubs, "delete subscription with id: %s", id)
+	if s.storage.Cache != nil {
+		s.storage.Cache.DeleteByID(id)
+	}
 	return nil
 }
 
