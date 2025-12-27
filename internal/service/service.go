@@ -6,7 +6,6 @@ import (
 	"time"
 
 	dto "github.com/Piccadilly98/subscription_service/internal/models/dto"
-	"github.com/Piccadilly98/subscription_service/internal/models/entities"
 	"github.com/Piccadilly98/subscription_service/internal/storage"
 )
 
@@ -76,52 +75,97 @@ func (s *Service) GetSubInfoDTOByID(ctx context.Context, id string) (*dto.Subscr
 	return res, nil
 }
 
-func (s *Service) UpdateSubscription(ctx context.Context, body *dto.UpdateSubscriptionRequest, id string) (*entities.UpdateSubscription, error) {
+func (s *Service) UpdateSubscription(ctx context.Context, body *dto.UpdateSubscriptionRequest, id string) error {
 	err := body.Validate()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	update, err := body.ToEntitie()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	read, err := s.storage.Db.GetSubscriptionByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// защита того что старую подписку мы не меняем - опционально
 	if read.IsEnded {
-		return nil, fmt.Errorf("cannot update ended subscription")
+		return fmt.Errorf("cannot update ended subscription")
 	}
 
 	if update.EndDate != nil {
-		// чекаем что энд позже старт
 		if read.StartDate.Compare(*update.EndDate) == 1 {
-			return nil, fmt.Errorf("invalid end_data: end_data cannot be before start_date")
+			return fmt.Errorf("invalid end_date: end_data cannot be before start_date")
 		}
-		// если энд в прошлом то подписка остановлена
 		if update.EndDate.Compare(time.Now()) == -1 {
 			update.Ended = getBoolPtr(true)
 		}
 	}
 
 	if update.Ended != nil {
-
-		// откинули заранее завершенную подписку
 		if read.StartDate.Compare(time.Now()) == 1 {
-			return nil, fmt.Errorf("can't stop a subscription that hasn't started")
+			return fmt.Errorf("can't stop a subscription that hasn't started")
 		}
-		// откидываем если подписка закончилась
 		if read.IsEnded {
-			return nil, fmt.Errorf("can't stop ended subscription")
+			return fmt.Errorf("can't stop ended subscription")
 		}
 
 		update.EndDate = GetTimePtr(time.Now())
 	}
-	// err = s.storage.Db.UpdateSubscription(ctx, update, id)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return update, nil
+	err = s.storage.Db.UpdateSubscription(ctx, update, id)
+	if err != nil {
+		return err
+	}
+	s.storage.Cache.AddToCacheByID(id)
+	return nil
+}
+
+func (s *Service) DeleteSubByID(ctx context.Context, id string) error {
+	err := s.storage.Db.DeleteRowBySubID(ctx, id)
+	if err != nil {
+		return err
+	}
+	s.storage.Cache.DeleteByID(id)
+	return nil
+}
+
+func (s *Service) GetSummarySubs(ctx context.Context, req *dto.QueryParamsSummary) (*dto.SummaryResponse, error) {
+	entitie, err := req.ToEntitie()
+	if err != nil {
+		return nil, err
+	}
+
+	if entitie.UserID != nil {
+		exist, err := s.GetExsistBySubID(ctx, *entitie.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if !exist {
+			return nil, fmt.Errorf("invalid user_id")
+		}
+	}
+	if entitie.EndDate.Before(entitie.StartDate) {
+		return nil, fmt.Errorf("end_date cannot be before start_date")
+	}
+
+	sum, err := s.storage.Db.GetSumaryByParam(ctx, entitie)
+	if err != nil {
+		return nil, err
+	}
+	if sum == nil {
+		sum = getIntPtr(0)
+	}
+	res := dto.FromEntityToSummaryResponse(entitie, *sum)
+	return res, nil
+}
+
+func (s *Service) CheckHealh(ctx context.Context) *dto.CheckHealth {
+	statusServer := "ok"
+	statusDB := "ok"
+	err := s.storage.Db.PingWithCtx(ctx)
+	if err != nil {
+		statusServer = "Service Unavailable"
+		statusDB = "does not respond"
+	}
+	return dto.ToCheckHealthDTO(statusServer, statusDB, err)
 }
