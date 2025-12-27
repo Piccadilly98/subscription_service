@@ -33,7 +33,7 @@ func TestUpdateSubscription_Validate(t *testing.T) {
 				EndDate: getPtrStr("02-02-2003"),
 				Ended:   getBoolPtr(true),
 			},
-			ExpectedError: fmt.Errorf("cannot specify both end_date and ended"),
+			ExpectedError: fmt.Errorf("[USER]cannot specify both end_date and ended"),
 		},
 		{
 			name: "end_not_nil_and_ended_false",
@@ -41,33 +41,33 @@ func TestUpdateSubscription_Validate(t *testing.T) {
 				EndDate: getPtrStr("02-02-2003"),
 				Ended:   getBoolPtr(false),
 			},
-			ExpectedError: fmt.Errorf("cannot specify both end_date and ended"),
+			ExpectedError: fmt.Errorf("[USER]cannot specify both end_date and ended"),
 		},
 		{
 			name: "price<0",
 			dto: &dto.UpdateSubscriptionRequest{
 				Price: getIntPtr(-1),
 			},
-			ExpectedError: fmt.Errorf("price connot be <=0"),
+			ExpectedError: fmt.Errorf("[USER]price connot be <=0"),
 		},
 		{
 			name: "price==0",
 			dto: &dto.UpdateSubscriptionRequest{
 				Price: getIntPtr(-1),
 			},
-			ExpectedError: fmt.Errorf("price connot be <=0"),
+			ExpectedError: fmt.Errorf("[USER]price connot be <=0"),
 		},
 		{
 			name:          "not_update_data",
 			dto:           &dto.UpdateSubscriptionRequest{},
-			ExpectedError: fmt.Errorf("not data for update"),
+			ExpectedError: fmt.Errorf("[USER]not data for update"),
 		},
 		{
 			name: "end_date_empty",
 			dto: &dto.UpdateSubscriptionRequest{
 				EndDate: getPtrStr(""),
 			},
-			ExpectedError: fmt.Errorf("end_date cannot be empty"),
+			ExpectedError: fmt.Errorf("[USER]end_date cannot be empty"),
 		},
 	}
 
@@ -121,7 +121,7 @@ func TestUpdateSubscription_ToEntitie(t *testing.T) {
 				EndDate: getPtrStr("random"),
 			},
 			ExpectedEndDate: false,
-			ExpectError:     fmt.Errorf("invalid end_date format"),
+			ExpectError:     fmt.Errorf("[USER]invalid end_date format"),
 		},
 	}
 

@@ -17,13 +17,13 @@ type QueryParamsSummary struct {
 func (q *QueryParamsSummary) ToEntitie() (*entities.GetSummary, error) {
 	res := &entities.GetSummary{}
 	if q.EndDate == "" && q.StartDate == "" {
-		return nil, fmt.Errorf("no contains period dates")
+		return nil, fmt.Errorf("[USER]no contains period dates")
 	}
 	if q.StartDate == "" {
-		return nil, fmt.Errorf("no contains start_period_date")
+		return nil, fmt.Errorf("[USER]no contains start_period_date")
 	}
 	if q.EndDate == "" {
-		return nil, fmt.Errorf("no contains end_period_date")
+		return nil, fmt.Errorf("[USER]no contains end_period_date")
 	}
 	start, err := ParceStartDate(q.StartDate)
 	if err != nil {
@@ -39,7 +39,7 @@ func (q *QueryParamsSummary) ToEntitie() (*entities.GetSummary, error) {
 	if q.UserID != nil {
 		_, err := uuid.Parse(*q.UserID)
 		if err != nil {
-			return nil, fmt.Errorf("user_id is not uuid")
+			return nil, fmt.Errorf("[USER]user_id is not uuid")
 		}
 		res.UserID = q.UserID
 	}
