@@ -32,18 +32,34 @@ func NewErrorWorker(
 	codeDbError int,
 	codeUserError int,
 	dbLogger *logger.Logger,
-) *ErrorWorker {
+	envNameErrorDb, envNameUserError string,
+) (*ErrorWorker, error) {
 	ew := &ErrorWorker{
 		codeDbError:   codeDbError,
 		codeUserError: codeUserError,
 		dbLogger:      dbLogger,
 	}
 
-	errDb := os.Getenv(EnvNameErrorDb)
-	errUser := os.Getenv(EnvNameUserError)
+	if dbLogger == nil {
+		return nil, fmt.Errorf("dbLogger cannot be nil")
+	}
+	if codeDbError <= 0 {
+		return nil, fmt.Errorf("invalid code DB error")
+	}
+	if codeUserError <= 0 {
+		return nil, fmt.Errorf("invalid code user error")
+	}
+	errDb := os.Getenv(envNameErrorDb)
+	if errDb == "" {
+		return nil, fmt.Errorf("invalid envNameErrorDb")
+	}
+	errUser := os.Getenv(envNameUserError)
+	if errUser == "" {
+		return nil, fmt.Errorf("invalid envNameUserError")
+	}
 	ew.dbError = strings.Split(errDb, ",")
 	ew.userError = strings.Split(errUser, ",")
-	return ew
+	return ew, nil
 }
 
 func (e *ErrorWorker) CheckErrorGetResult(err error, successCode int, userErr string) (int, error) {

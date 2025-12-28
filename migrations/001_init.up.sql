@@ -1,4 +1,4 @@
-CREATE TABLE subscriptions(
+CREATE TABLE IF NOT EXISTS subscriptions(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     service_name VARCHAR(255) NOT NULL,
