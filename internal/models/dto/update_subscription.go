@@ -15,21 +15,21 @@ type UpdateSubscriptionRequest struct {
 
 func (u *UpdateSubscriptionRequest) Validate() error {
 	if u.Price == nil && u.Ended == nil && u.EndDate == nil {
-		return fmt.Errorf("[USER]not data for update")
+		return fmt.Errorf("not data for update")
 	}
 
 	if u.Price != nil {
 		if *u.Price <= 0 {
-			return fmt.Errorf("[USER]price connot be <=0")
+			return fmt.Errorf("price connot be <=0")
 		}
 	}
 
 	if u.EndDate != nil {
 		if *u.EndDate == "" {
-			return fmt.Errorf("[USER]end_date cannot be empty")
+			return fmt.Errorf("end_date cannot be empty")
 		}
 		if u.Ended != nil {
-			return fmt.Errorf("[USER]cannot specify both end_date and ended")
+			return fmt.Errorf("cannot specify both end_date and ended")
 		}
 	}
 	return nil

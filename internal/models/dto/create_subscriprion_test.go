@@ -62,7 +62,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				StartDate: "01-01-2025",
 				EndDate:   getPtrStr("02-02-2025"),
 			},
-			wantErr: fmt.Errorf("[USER]service_name cannot be empty"),
+			wantErr: fmt.Errorf("service_name cannot be empty"),
 		},
 		{
 			name: "invalid_2_price<0",
@@ -73,7 +73,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				StartDate:   "01-2025",
 				EndDate:     getPtrStr("02-2025"),
 			},
-			wantErr: fmt.Errorf("[USER]price cannot be <= 0"),
+			wantErr: fmt.Errorf("price cannot be <= 0"),
 		},
 		{
 			name: "invalid_3_price==0",
@@ -84,7 +84,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				StartDate:   "01-2025",
 				EndDate:     getPtrStr("02-2025"),
 			},
-			wantErr: fmt.Errorf("[USER]price cannot be <= 0"),
+			wantErr: fmt.Errorf("price cannot be <= 0"),
 		},
 		{
 			name: "invalid_4_id_empty",
@@ -94,7 +94,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				StartDate:   "01-2025",
 				EndDate:     getPtrStr("02-2025"),
 			},
-			wantErr: fmt.Errorf("[USER]user_id cannot be empty"),
+			wantErr: fmt.Errorf("user_id cannot be empty"),
 		},
 		{
 			name: "invalid_5_user_id_not_uuid",
@@ -105,7 +105,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				StartDate:   "01-2025",
 				EndDate:     getPtrStr("02-2025"),
 			},
-			wantErr: fmt.Errorf("[USER]user_id is not uuid"),
+			wantErr: fmt.Errorf("user_id is not uuid"),
 		},
 		{
 			name: "invalid_6_no_start_date",
@@ -114,7 +114,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				Price:       300,
 				UserID:      uuid.NewString(),
 			},
-			wantErr: fmt.Errorf("[USER]start_date cannot be empty"),
+			wantErr: fmt.Errorf("start_date cannot be empty"),
 		},
 		{
 			name: "invalid_7_start_date_empty",
@@ -124,7 +124,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				UserID:      uuid.NewString(),
 				StartDate:   "",
 			},
-			wantErr: fmt.Errorf("[USER]start_date cannot be empty"),
+			wantErr: fmt.Errorf("start_date cannot be empty"),
 		},
 		{
 			name: "invalid_8_end_date_empty",
@@ -135,7 +135,7 @@ func TestCreateSubscriptions_Validate(t *testing.T) {
 				StartDate:   "01-2025",
 				EndDate:     getPtrStr(""),
 			},
-			wantErr: fmt.Errorf("[USER]end_date cannot be empty"),
+			wantErr: fmt.Errorf("end_date cannot be empty"),
 		},
 	}
 
@@ -195,17 +195,17 @@ func TestParseStartDate(t *testing.T) {
 		{
 			name:    "invalid_1_random_str",
 			date:    "random",
-			wantErr: fmt.Errorf("[USER]invalid start_date format"),
+			wantErr: fmt.Errorf("invalid start_date format"),
 		},
 		{
 			name:    "invalid_2_invalid_date",
 			date:    "29-02-2025",
-			wantErr: fmt.Errorf("[USER]invalid start_date format"),
+			wantErr: fmt.Errorf("invalid start_date format"),
 		},
 		{
 			name:    "invalid_3_invalid_month",
 			date:    "02-14-2025",
-			wantErr: fmt.Errorf("[USER]invalid start_date format"),
+			wantErr: fmt.Errorf("invalid start_date format"),
 		},
 	}
 
@@ -343,7 +343,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 				StartDate: "01-01-2025",
 				EndDate:   getPtrStr("31-12-2024"),
 			},
-			wantErr: fmt.Errorf("[USER]end_date cannot be before start_date"),
+			wantErr: fmt.Errorf("end_date cannot be before start_date"),
 		},
 		{
 			name: "end_equal_start_mm-yyyy",
@@ -464,7 +464,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 				UserID:      uuid.NewString(),
 				StartDate:   "2025-01-01",
 			},
-			wantErr: fmt.Errorf("[USER]invalid start_date format"),
+			wantErr: fmt.Errorf("invalid start_date format"),
 		},
 		{
 			name: "invalid_end_date_with_slashes",
@@ -475,7 +475,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 				StartDate:   "01-01-2025",
 				EndDate:     getPtrStr("01/01/2025"),
 			},
-			wantErr: fmt.Errorf("[USER]invalid end_date format"),
+			wantErr: fmt.Errorf("invalid end_date format"),
 		},
 		{
 			name: "end_date_in_wrong_order_yyyy_mm_dd",
@@ -486,7 +486,7 @@ func TestCreateSubscriptions_ToEntity_Integration(t *testing.T) {
 				StartDate:   "01-01-2025",
 				EndDate:     getPtrStr("2025-12-31"), // YYYY-MM-DD
 			},
-			wantErr: fmt.Errorf("[USER]invalid end_date format"),
+			wantErr: fmt.Errorf("invalid end_date format"),
 		},
 	}
 

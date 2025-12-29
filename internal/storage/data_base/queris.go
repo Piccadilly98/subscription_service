@@ -43,8 +43,8 @@ func (d *DataBase) GetExsistBySubID(ctx context.Context, id string) (bool, error
 	var exists bool
 	err := d.db.QueryRowContext(ctx, `
 	SELECT 
-	EXISTS(SELECT 1 FROM subscriptions WHERE id = $1)
-	FROM subscriptions;`, id).Scan(&exists)
+	EXISTS(SELECT 1 FROM subscriptions WHERE id = $1);
+	`, id).Scan(&exists)
 
 	return exists, err
 }

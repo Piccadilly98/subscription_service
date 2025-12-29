@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS subscriptions(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -9,3 +11,9 @@ CREATE TABLE IF NOT EXISTS subscriptions(
     created_date TIMESTAMP DEFAULT NOW(),
     updated_date TIMESTAMP
 );
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE IF EXISTS subscriptions;
+-- +goose StatementEnd

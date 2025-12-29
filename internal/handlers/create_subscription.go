@@ -6,20 +6,20 @@ import (
 	"log"
 	"net/http"
 
-	error_worker "github.com/Piccadilly98/subscription_service/internal/errorWorker"
+	"github.com/Piccadilly98/subscription_service/internal/errors_checker"
 	dto "github.com/Piccadilly98/subscription_service/internal/models/dto"
 	"github.com/Piccadilly98/subscription_service/internal/service"
 )
 
 type CreateSubsriptionHandler struct {
-	service   *service.Service
-	errWorker *error_worker.ErrorWorker
+	service *service.Service
+	ew      *errors_checker.ErrorWorker
 }
 
-func NewCreateHandler(s *service.Service, errWorker *error_worker.ErrorWorker) *CreateSubsriptionHandler {
+func NewCreateHandler(s *service.Service, ew *errors_checker.ErrorWorker) *CreateSubsriptionHandler {
 	return &CreateSubsriptionHandler{
-		service:   s,
-		errWorker: errWorker,
+		service: s,
+		ew:      ew,
 	}
 }
 
@@ -38,13 +38,13 @@ func (c *CreateSubsriptionHandler) Handler(w http.ResponseWriter, r *http.Reques
 
 	res, err := c.service.CreateSubsription(r.Context(), body)
 	if err != nil {
-		formatingErrorAndWriteError(c.errWorker, w, err, http.StatusCreated, ErrorInvalidBody)
+		processingError(w, err, c.ew)
 		return
 	}
 
 	b, err := json.Marshal(res)
 	if err != nil {
-		formatingErrorAndWriteError(c.errWorker, w, err, http.StatusCreated, "")
+		processingError(w, err, c.ew)
 		return
 	}
 
