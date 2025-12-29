@@ -2,24 +2,25 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
-	error_worker "github.com/Piccadilly98/subscription_service/internal/errorWorker"
+	"github.com/Piccadilly98/subscription_service/internal/errors_checker"
 	"github.com/Piccadilly98/subscription_service/internal/models/dto"
 	"github.com/Piccadilly98/subscription_service/internal/service"
 )
 
 type UpdateHandler struct {
-	serv      *service.Service
-	errWorker *error_worker.ErrorWorker
+	serv *service.Service
+	ew   *errors_checker.ErrorWorker
 }
 
-func NewUpdateHandler(serv *service.Service, errWorker *error_worker.ErrorWorker) *UpdateHandler {
+func NewUpdateHandler(serv *service.Service, ew *errors_checker.ErrorWorker) *UpdateHandler {
 	return &UpdateHandler{
-		serv:      serv,
-		errWorker: errWorker,
+		serv: serv,
+		ew:   ew,
 	}
 }
 
@@ -33,12 +34,11 @@ func (u *UpdateHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	exist, err := u.serv.GetExsistBySubID(r.Context(), id)
 	if err != nil {
-		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
+		processingError(w, err, u.ew)
 		return
 	}
 	if !exist {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("404 page not found"))
+		processingError(w, errors.New("subscription not found"), u.ew)
 		return
 	}
 	body := &dto.UpdateSubscriptionRequest{}
@@ -50,21 +50,15 @@ func (u *UpdateHandler) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = u.serv.UpdateSubscription(r.Context(), body, id)
+	res, err := u.serv.UpdateSubscription(r.Context(), body, id)
 	if err != nil {
-		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
+		processingError(w, err, u.ew)
 		return
 	}
 
-	info, err := u.serv.GetSubInfoDTOByID(r.Context(), id)
+	b, err := json.Marshal(res)
 	if err != nil {
-		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
-		return
-	}
-
-	b, err := json.Marshal(info)
-	if err != nil {
-		formatingErrorAndWriteError(u.errWorker, w, err, http.StatusOK, ErrorInvalidBody)
+		processingError(w, err, u.ew)
 		return
 	}
 	w.Header().Set(HeaderContentType, HeaderJson)

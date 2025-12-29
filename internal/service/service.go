@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
-	logger "github.com/Piccadilly98/subscription_service/internal/loger"
 	dto "github.com/Piccadilly98/subscription_service/internal/models/dto"
-	"github.com/Piccadilly98/subscription_service/internal/storage"
+	"github.com/Piccadilly98/subscription_service/internal/storage/cache"
+	"github.com/Piccadilly98/subscription_service/internal/storage/data_base"
 )
 
 const (
@@ -16,17 +18,21 @@ const (
 )
 
 type Service struct {
-	storage      *storage.Storage
-	changeLogger *logger.Logger
+	db               *data_base.DataBase
+	cache            *cache.Cache
+	changeLogger     *log.Logger
+	dbCriticalLogger *log.Logger
 }
 
-func NewService(st *storage.Storage, changeLogger *logger.Logger) (*Service, error) {
-	if st == nil {
-		return nil, fmt.Errorf("storage connot be nil")
+func NewService(db *data_base.DataBase, cache *cache.Cache) (*Service, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
 	}
 	return &Service{
-		storage:      st,
-		changeLogger: changeLogger,
+		db:               db,
+		cache:            cache,
+		changeLogger:     log.New(os.Stdout, "[UPDATE SUBS INFO] ", log.Ldate|log.Ltime),
+		dbCriticalLogger: log.New(os.Stderr, "[DB PING ERROR] ", log.Ldate|log.Ltime),
 	}, nil
 }
 
@@ -41,107 +47,121 @@ func (s *Service) CreateSubsription(ctx context.Context, req *dto.CreateSubscrip
 		return nil, err
 	}
 
-	id, err := s.storage.Db.CreateNewSubscribe(ctx, mod)
+	id, err := s.db.CreateNewSubscribe(ctx, mod)
 	if err != nil {
 		return nil, err
 	}
-	if s.storage.Cache != nil {
-		s.storage.Cache.AddToCacheByID(id)
+	if s.cache != nil {
+		s.cache.AddToCacheByID(id)
 	}
-	entitie, err := s.storage.Db.GetSubscriptionByID(ctx, id)
+	entitie, err := s.db.GetSubscriptionByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	s.changeLogger.Printf(LevelForChangedSubs, "create new subscription with id: %s", id)
+	s.changeLogger.Printf("INFO: Create new subscription with id: %s", id)
 	res := dto.FromEntityToSubResp(entitie)
 	return res, nil
 }
 
 func (s *Service) GetExsistBySubID(ctx context.Context, id string) (bool, error) {
-	if s.storage.Cache != nil {
-		if s.storage.Cache.CheckBySubID(id) {
+	if s.cache != nil {
+		if s.cache.CheckBySubID(id) {
 			return true, nil
 		}
 	}
-	exists, err := s.storage.Db.GetExsistBySubID(ctx, id)
+	exists, err := s.db.GetExsistBySubID(ctx, id)
 	if err != nil {
 		return false, err
 	}
-	if exists && s.storage.Cache != nil {
-		s.storage.Cache.AddToCacheByID(id)
+	if exists && s.cache != nil {
+		s.cache.AddToCacheByID(id)
 	}
 
 	return exists, nil
 }
 
 func (s *Service) GetSubInfoDTOByID(ctx context.Context, id string) (*dto.SubscriptionResponse, error) {
-	entitie, err := s.storage.Db.GetSubscriptionByID(ctx, id)
+	entitie, err := s.db.GetSubscriptionByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if s.storage.Cache != nil {
-		s.storage.Cache.AddToCacheByID(id)
+	if s.cache != nil {
+		s.cache.AddToCacheByID(id)
 	}
 	res := dto.FromEntityToSubResp(entitie)
 	return res, nil
 }
 
-func (s *Service) UpdateSubscription(ctx context.Context, body *dto.UpdateSubscriptionRequest, id string) error {
+func (s *Service) UpdateSubscription(ctx context.Context, body *dto.UpdateSubscriptionRequest, id string) (*dto.SubscriptionResponse, error) {
 	err := body.Validate()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	update, err := body.ToEntitie()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	read, err := s.storage.Db.GetSubscriptionByID(ctx, id)
+	tx, err := s.db.Begin()
 	if err != nil {
-		return err
+		return nil, err
+	}
+	defer func() {
+		tx.Rollback()
+
+	}()
+	read, err := s.db.GetSubscriptionForUpdateTX(ctx, id, tx)
+	if err != nil {
+		return nil, err
 	}
 
 	if read.IsEnded {
-		return fmt.Errorf("cannot update ended subscription")
+		return nil, fmt.Errorf("cannot update ended subscription")
 	}
 
 	if update.EndDate != nil {
 		if read.StartDate.Compare(*update.EndDate) == 1 {
-			return fmt.Errorf("invalid end_date: end_data cannot be before start_date")
+			return nil, fmt.Errorf("invalid end_date: end_data cannot be before start_date")
 		}
 		if update.EndDate.Compare(time.Now()) == -1 {
 			update.Ended = getBoolPtr(true)
 		}
 	}
-
-	if update.Ended != nil {
+	if update.Ended != nil && update.EndDate == nil {
 		if read.StartDate.Compare(time.Now()) == 1 {
-			return fmt.Errorf("can't stop a subscription that hasn't started")
+			return nil, fmt.Errorf("can't stop a subscription that hasn't started")
 		}
 		if read.IsEnded {
-			return fmt.Errorf("can't stop ended subscription")
+			return nil, fmt.Errorf("can't stop ended subscription")
 		}
 
 		update.EndDate = GetTimePtr(time.Now())
 	}
-	err = s.storage.Db.UpdateSubscription(ctx, update, id)
+	err = s.db.UpdateSubscriptionTX(ctx, update, id, tx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	s.changeLogger.Printf(LevelForChangedSubs, "update subscription with id: %s", id)
-	if s.storage.Cache != nil {
-		s.storage.Cache.AddToCacheByID(id)
+	res, err := s.db.GetSubscriptionTX(ctx, id, tx)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	s.changeLogger.Printf("INFO: Update subscription with id: %s", id)
+	if s.cache != nil {
+		s.cache.AddToCacheByID(id)
+	}
+	return dto.FromEntityToSubResp(res), nil
 }
 
 func (s *Service) DeleteSubByID(ctx context.Context, id string) error {
-	err := s.storage.Db.DeleteRowBySubID(ctx, id)
+	err := s.db.DeleteRowBySubID(ctx, id)
 	if err != nil {
 		return err
 	}
-	s.changeLogger.Printf(LevelForDeleteSubs, "delete subscription with id: %s", id)
-	if s.storage.Cache != nil {
-		s.storage.Cache.DeleteByID(id)
+	s.changeLogger.Printf("WARNING: delete subscription with id: %s", id)
+	if s.cache != nil {
+		s.cache.DeleteByID(id)
 	}
 	return nil
 }
@@ -165,7 +185,7 @@ func (s *Service) GetSummarySubs(ctx context.Context, req *dto.QueryParamsSummar
 		return nil, fmt.Errorf("end_date cannot be before start_date")
 	}
 
-	sum, err := s.storage.Db.GetSumaryByParam(ctx, entitie)
+	sum, err := s.db.GetSumaryByParam(ctx, entitie)
 	if err != nil {
 		return nil, err
 	}
@@ -179,10 +199,11 @@ func (s *Service) GetSummarySubs(ctx context.Context, req *dto.QueryParamsSummar
 func (s *Service) CheckHealh(ctx context.Context) *dto.CheckHealth {
 	statusServer := "ok"
 	statusDB := "ok"
-	err := s.storage.Db.PingWithCtx(ctx)
+	err := s.db.PingWithCtx(ctx)
 	if err != nil {
 		statusServer = "Service Unavailable"
 		statusDB = "does not respond"
+		s.dbCriticalLogger.Printf("CRITICAL: db ping error: %s\n", err.Error())
 	}
 	return dto.ToCheckHealthDTO(statusServer, statusDB, err)
 }

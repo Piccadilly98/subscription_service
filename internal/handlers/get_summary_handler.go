@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 
-	error_worker "github.com/Piccadilly98/subscription_service/internal/errorWorker"
+	"github.com/Piccadilly98/subscription_service/internal/errors_checker"
 	"github.com/Piccadilly98/subscription_service/internal/models/dto"
 	"github.com/Piccadilly98/subscription_service/internal/service"
 )
 
 type GetSummaryHandler struct {
-	serv      *service.Service
-	errWorker *error_worker.ErrorWorker
+	serv *service.Service
+	ew   *errors_checker.ErrorWorker
 }
 
-func NewGetSummaryHandler(serv *service.Service, errWorker *error_worker.ErrorWorker) *GetSummaryHandler {
+func NewGetSummaryHandler(serv *service.Service, ew *errors_checker.ErrorWorker) *GetSummaryHandler {
 	return &GetSummaryHandler{
-		serv:      serv,
-		errWorker: errWorker,
+		serv: serv,
+		ew:   ew,
 	}
 }
 
@@ -26,13 +26,13 @@ func (g *GetSummaryHandler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	res, err := g.serv.GetSummarySubs(r.Context(), params)
 	if err != nil {
-		formatingErrorAndWriteError(g.errWorker, w, err, http.StatusOK, ErrorInvalidQuery)
+		processingError(w, err, g.ew)
 		return
 	}
 
 	b, err := json.Marshal(res)
 	if err != nil {
-		formatingErrorAndWriteError(g.errWorker, w, err, http.StatusOK, ErrorInvalidQuery)
+		processingError(w, err, g.ew)
 		return
 	}
 	w.Header().Set(HeaderContentType, HeaderJson)
