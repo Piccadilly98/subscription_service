@@ -5,34 +5,30 @@ import (
 	"fmt"
 	"net/http"
 
-	error_worker "github.com/Piccadilly98/subscription_service/internal/errorWorker"
+	"github.com/Piccadilly98/subscription_service/internal/errors_checker"
 	"github.com/Piccadilly98/subscription_service/internal/models/dto"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func formatingErrorAndWriteError(
-	errWorker *error_worker.ErrorWorker,
-	w http.ResponseWriter,
-	err error,
-	successCode int,
-	userErr string) {
-
-	code, err := errWorker.CheckErrorGetResult(err, successCode, userErr)
+func processingError(w http.ResponseWriter, err error, ew *errors_checker.ErrorWorker) {
+	code, strErr := ew.ProcessError(err)
 	if code == -1 {
 		return
 	}
-	errorResponse(w, err, code)
+
+	errorResponse(w, strErr, code)
 }
 
 func errorResponse(w http.ResponseWriter, err error, code int) {
-	w.Header().Set(HeaderContentType, HeaderJson)
-	w.WriteHeader(code)
 	resp := dto.NewErrorDto(err)
 	b, err := json.Marshal(resp)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set(HeaderContentType, HeaderJson)
+	w.WriteHeader(code)
 	w.Write(b)
 }
 
