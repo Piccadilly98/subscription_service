@@ -98,7 +98,7 @@ func TestSubscriptionResponse_FromEntityToSubResp(t *testing.T) {
 			},
 			expectStatus:    dto.StatusNotStarted,
 			expectedEndDate: true,
-			expectEndDate: fmt.Sprintf("%d-%d-%d",
+			expectEndDate: fmt.Sprintf("%02d-%02d-%d",
 				Now.Add(48*time.Hour).Day(),
 				Now.Add(48*time.Hour).Month(),
 				Now.Add(48*time.Hour).Year()),
