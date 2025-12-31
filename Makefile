@@ -1,6 +1,9 @@
 all: goose-up start
 
 
+docker-start: goose-up
+	./build/main
+
 goose-up:
 	goose up
 goose-down:
@@ -28,3 +31,6 @@ start: assembly
 
 run:
 	go run ./cmd/main/main.go
+
+docker-run:
+	docker-compose up --build

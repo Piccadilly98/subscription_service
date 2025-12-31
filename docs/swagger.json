@@ -1,0 +1,430 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "REST API для управления данными о подписках пользователей и расчёта их стоимости. Реализован в качестве тестового задания на вакансию junior Goolang для Effective Mobile.",
+        "title": "Subscriptions service",
+        "termsOfService": "https://effective-mobile.ru",
+        "contact": {
+            "name": "MyResumeHH",
+            "url": "https://hh.ru/resume/875f5df3ff0fbfea5f0039ed1f39506e574431",
+            "email": "senior.filippov2017@yandex.ru"
+        }
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/health-check": {
+            "get": {
+                "description": "Возвращает состояние сервера:\u003cbr\u003e•Общий статус сервера(\"ok\" или \"Service Unavailable\")\u003cbr\u003e•Статус базы данных в результате пинга(\"ok\" или \"does not respond\")\u003cbr\u003e•Опциональное поле Error с ошибкой от БД\u003cbr\u003e\u003cbr\u003eЭндпоинт предназначен для мониторинга и health-check'ов.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "monitoring"
+                ],
+                "summary": "Проверка состояния сервиса",
+                "responses": {
+                    "200": {
+                        "description": "Состояние сервера",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckHealth"
+                        }
+                    },
+                    "503": {
+                        "description": "Сервис недоступен (проблема с базой данных)",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckHealth"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscriptions": {
+            "post": {
+                "description": "Принимает данные о новой подписке пользователя в формате JSON и выполняет полную валидацию.\u003cbr\u003e\u003cbr\u003eОбязательные поля: service_name, price, user_id, start_date.\u003cbr\u003eПоле end_date — опциональное (можно передать null или не указывать).\u003cbr\u003e\u003cbr\u003eПоддерживаемые форматы даты:\u003cbr\u003e• \"MM-YYYY\" (например, \"07-2025\")\u003cbr\u003e• \"DD-MM-YYYY\" (например, \"15-07-2025\")\u003cbr\u003e\u003cbr\u003eХендлер автоматически:\u003cbr\u003e• валидирует корректность дат\u003cbr\u003e• проверяет, что end_date не раньше start_date (если указана)\u003cbr\u003e• приводит обе даты к единому формату \"DD-MM-YYYY\" (первый день месяца(для стартовой даты и последний день месяца для даты окончания) для формата \"MM-YYYY\")\u003cbr\u003e\u003cbr\u003eПри успешном создании возвращает данные подписки с присвоенным ID и статусом \"active\", \"ended\" или \"not started\" в зависимости от дат которые были в теле запроса\u003cbr\u003e\u003cbr\u003eПри ошибке возвращается dto с текстом ошибки и временем ответа.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Создать новую подписку и получить созданную подписку",
+                "parameters": [
+                    {
+                        "description": "Данные подписки",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateSubscriptionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Подписка успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные данные запроса",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscriptions/summary": {
+            "get": {
+                "description": "Возвращает общую стоимость всех подписок за указанный период с возможностью фильтрации.\u003cbr\u003e\u003cbr\u003eОбязательные параметры:\u003cbr\u003e• start_date — начало периода (формат \"MM-YYYY\" или \"DD-MM-YYYY\")\u003cbr\u003e• end_date — конец периода (формат \"MM-YYYY\" или \"DD-MM-YYYY\")\u003cbr\u003e\u003cbr\u003eОпциональные параметры:\u003cbr\u003e• user_id — фильтр по ID пользователя (UUID)\u003cbr\u003e• service_name — фильтр по названию сервиса\u003cbr\u003e\u003cbr\u003eРасчёт включает только подписки, начатые в указанном периоде (учитываются пересечения дат).\u003cbr\u003eЕсли период некорректный (end_date раньше start_date или неверный формат) — возвращается ошибка 400.\u003cbr\u003e\u003cbr\u003eВсе ошибки возвращаются в едином формате JSON (ErrorDTO).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Подсчёт суммарной стоимости подписок",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "08-07-2025",
+                        "description": "Начало периода (MM-YYYY)",
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "12-2025",
+                        "description": "Конец периода (MM-YYYY)",
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+                        "description": "Фильтр по ID пользователя",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "Yandex Plus",
+                        "description": "Фильтр по названию сервиса",
+                        "name": "service_name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Суммарная стоимость расчитана и возвращется вместе с заданным периодом",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SummaryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscriptions/{id}": {
+            "get": {
+                "description": "Получает данные по ID подписки(UUID).\u003cbr\u003e\u003cbr\u003eСервис выполняет проверки:\u003cbr\u003e• ID не пустой и является валидным UUID\u003cbr\u003e• Подписка с таким ID существует\u003cbr\u003e\u003cbr\u003eПри успешном запросе возвращает данные подписки с рассчитанным статусом \"active\", \"ended\" или \"not started\"\u003cbr\u003e\u003cbr\u003eВсе ошибки возвращаются в формате JSON(dto.ErrorDTO)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Получить данные подписки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "8b2d4644-5688-47f7-a8b6-7e6d4f55a951",
+                        "description": "ID подписки (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Подписка успешно получена",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID не uuid или пустой",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "ID не существует",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Частичное обновление полей подписки по уникальному идентификатору (UUID).\u003cbr\u003e\u003cbr\u003eСервис выполняет проверки:\u003cbr\u003e• ID не пустой и является валидным UUID\u003cbr\u003e• Подписка с таким ID существует\u003cbr\u003e• Хотя бы одно поле передано для обновления\u003cbr\u003e• Изменение завершённой подписки запрещено\u003cbr\u003e• Нельзя установить end_date раньше start_date\u003cbr\u003e• Нельзя остановить подписку, которая ещё не началась\u003cbr\u003e• Цена не может быть меньше или равна нулю\u003cbr\u003e\u003cbr\u003eОпциональные поля в теле запроса:\u003cbr\u003e• price — новая месячная стоимость (целое положительное число)\u003cbr\u003e• end_date — новая дата окончания (формат \"MM-YYYY\" или \"DD-MM-YYYY\", можно null для снятия)\u003cbr\u003e• ended — флаг остановки подписки (подписка считается активной в день остановки)\u003cbr\u003e\u003cbr\u003eПри успешном обновлении возвращаются актуальные данные подписки.\u003cbr\u003e\u003cbr\u003eВсе ошибки возвращаются в едином формате JSON (ErrorDTO).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Обновление данных подписки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "b6469ed4-44ae-4436-8827-76131d2d446e",
+                        "description": "ID подписки (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для обновления",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateSubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные обновлённой подписки",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubscriptionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные данные запроса",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Подписка с указанным ID не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет существующую подписку по уникальному идентификатору (UUID).\u003cbr\u003e\u003cbr\u003eСервис выполняет проверки:\u003cbr\u003e• ID не пустой и является валидным UUID\u003cbr\u003e• Подписка с таким ID существует\u003cbr\u003e\u003cbr\u003eПри успешном удалении возвращается статус 204 No Content (без тела).\u003cbr\u003e\u003cbr\u003eВсе ошибки возвращаются в формате JSON (ErrorDTO).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Удалить существующую подписку",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "b6469ed4-44ae-4436-8827-76131d2d446e",
+                        "description": "ID подписки (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Подписка успешно удалена"
+                    },
+                    "400": {
+                        "description": "ID не uuid или пустой",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "ID не существует",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorDTO"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.CheckHealth": {
+            "type": "object",
+            "properties": {
+                "db_status": {
+                    "type": "string"
+                },
+                "error_text": {
+                    "type": "string"
+                },
+                "server_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateSubscriptionsRequest": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string",
+                    "example": "12-2025"
+                },
+                "price": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "service_name": {
+                    "type": "string",
+                    "example": "Yandex Plus"
+                },
+                "start_date": {
+                    "type": "string",
+                    "example": "07-2025"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                }
+            }
+        },
+        "dto.ErrorDTO": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "example": "2025-12-31 00:48:39.814495 +0000 UTC"
+                },
+                "error_text": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "error"
+                }
+            }
+        },
+        "dto.SubscriptionResponse": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string",
+                    "example": "31-12-2030"
+                },
+                "price": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "service_name": {
+                    "type": "string",
+                    "example": "Yandex Plus"
+                },
+                "start_date": {
+                    "type": "string",
+                    "example": "01-07-2025"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "subscribe_id": {
+                    "type": "string",
+                    "example": "b6469ed4-44ae-4436-8827-76131d2d446e"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                }
+            }
+        },
+        "dto.SummaryResponse": {
+            "type": "object",
+            "properties": {
+                "begin_period": {
+                    "type": "string",
+                    "example": "08-08-2025"
+                },
+                "finish_period": {
+                    "type": "string",
+                    "example": "08-08-2026"
+                },
+                "sum": {
+                    "type": "integer",
+                    "example": 1000
+                }
+            }
+        },
+        "dto.UpdateSubscriptionRequest": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "ended": {
+                    "type": "boolean"
+                },
+                "price": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "externalDocs": {
+        "description": "Test Task By Effective Mobile",
+        "url": "https://disk.360.yandex.ru/i/iT7aYzpZH_-lVg"
+    }
+}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/Piccadilly98/subscription_service/docs"
 	"github.com/Piccadilly98/subscription_service/internal/config"
 	"github.com/Piccadilly98/subscription_service/internal/errors_checker"
 	"github.com/Piccadilly98/subscription_service/internal/handlers"
@@ -14,6 +15,7 @@ import (
 	"github.com/Piccadilly98/subscription_service/internal/storage/cache"
 	"github.com/Piccadilly98/subscription_service/internal/storage/data_base"
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Server struct {
@@ -30,7 +32,6 @@ func InitServer() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	db, err := data_base.NewDB(config.ConnectionStr)
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func InitServer() (*Server, error) {
 	r.Put("/subscriptions/{id}", updateHandler.Handler)
 	r.Post("/subscriptions", createHandler.Handler)
 	r.Get("/subscriptions/{id}", getHandler.Handler)
-
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	httpServer := &http.Server{
 		Addr:    config.ServerAddr + ":" + config.ServerPort,
 		Handler: r,

@@ -40,16 +40,14 @@ func checkHeaderJson(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func checkURLParam(w http.ResponseWriter, r *http.Request) string {
+func checkURLParam(w http.ResponseWriter, r *http.Request, ew *errors_checker.ErrorWorker) string {
 	id := chi.URLParam(r, URLParam)
 	if id == "" {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("404 page not found"))
+		processingError(w, fmt.Errorf("invalid type subscribe_id"), ew)
 		return ""
 	}
 	if _, err := uuid.Parse(id); err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("404 page not found"))
+		processingError(w, fmt.Errorf("invalid type subscribe_id"), ew)
 		return ""
 	}
 	return id
