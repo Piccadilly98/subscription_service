@@ -36,7 +36,6 @@ func InitServer() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var c *cache.Cache
 	if config.NeededCache {
 		c = cache.NewCache(time.Second * time.Duration(config.CacheTTLInSecond))
@@ -68,7 +67,6 @@ func InitServer() (*Server, error) {
 		Addr:    config.ServerAddr + ":" + config.ServerPort,
 		Handler: r,
 	}
-
 	return &Server{
 		router:  r,
 		server:  httpServer,
