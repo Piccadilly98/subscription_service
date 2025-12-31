@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -155,7 +156,14 @@ func (s *Service) UpdateSubscription(ctx context.Context, body *dto.UpdateSubscr
 }
 
 func (s *Service) DeleteSubByID(ctx context.Context, id string) error {
-	err := s.db.DeleteRowBySubID(ctx, id)
+	exist, err := s.GetExsistBySubID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return fmt.Errorf("invalid subscribe_id")
+	}
+	err = s.db.DeleteRowBySubID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -196,14 +204,16 @@ func (s *Service) GetSummarySubs(ctx context.Context, req *dto.QueryParamsSummar
 	return res, nil
 }
 
-func (s *Service) CheckHealh(ctx context.Context) *dto.CheckHealth {
+func (s *Service) CheckHealh(ctx context.Context) (*dto.CheckHealth, int) {
 	statusServer := "ok"
 	statusDB := "ok"
+	code := http.StatusOK
 	err := s.db.PingWithCtx(ctx)
 	if err != nil {
 		statusServer = "Service Unavailable"
 		statusDB = "does not respond"
+		code = http.StatusServiceUnavailable
 		s.dbCriticalLogger.Printf("CRITICAL: db ping error: %s\n", err.Error())
 	}
-	return dto.ToCheckHealthDTO(statusServer, statusDB, err)
+	return dto.ToCheckHealthDTO(statusServer, statusDB, err), code
 }

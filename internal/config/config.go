@@ -49,14 +49,16 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
-	path, err := findEnv()
-	if err != nil {
-		return nil, err
-	}
+	if err := godotenv.Load(); err != nil {
+		path, err := findEnv()
+		if err != nil {
+			return nil, err
+		}
 
-	err = godotenv.Load(path)
-	if err != nil {
-		return nil, err
+		err = godotenv.Load(path)
+		if err != nil {
+			return nil, err
+		}
 	}
 	serverAddr := os.Getenv(EnvNameServerAddr)
 	if serverAddr == "" {
@@ -79,7 +81,6 @@ func NewConfig() (*Config, error) {
 	if dbHost == "" {
 		dbHost = DefaultDbHost
 	}
-
 	dbPort, err := validationPort(EnvNameDbPort, DefaultDbPort)
 	if err != nil {
 		return nil, err
@@ -111,7 +112,6 @@ func NewConfig() (*Config, error) {
 			ttl = DefaultCacheTTLInSeconds
 		}
 	}
-
 	loggingUserError := getBoolEnv(EnvNameNeededLogUserError, false)
 	conf := &Config{
 		ConnectionStr:    fmt.Sprintf("user=%s port=%s password=%s dbname=%s host=%s sslmode=%s", dbUser, dbPort, dbPassword, nameDb, dbHost, dbSsl),

@@ -14,13 +14,13 @@ const (
 )
 
 type SubscriptionResponse struct {
-	SubscribeID string  `json:"subscribe_id"`
-	UserID      string  `json:"user_id"`
-	ServiceName string  `json:"service_name"`
-	Price       int     `json:"price"`
-	StartDate   string  `json:"start_date"`
-	EndDate     *string `json:"end_date"`
-	Status      string  `json:"status"`
+	SubscribeID string  `json:"subscribe_id" example:"b6469ed4-44ae-4436-8827-76131d2d446e"`
+	UserID      string  `json:"user_id"  example:"60601fee-2bf1-4721-ae6f-7636e79a0cba"`
+	ServiceName string  `json:"service_name" example:"Yandex Plus"`
+	Price       int     `json:"price" example:"400"`
+	StartDate   string  `json:"start_date" example:"01-07-2025"`
+	EndDate     *string `json:"end_date,omitempty" example:"31-12-2030"`
+	Status      string  `json:"status" example:"active"`
 }
 
 func FromEntityToSubResp(entity *entities.ReadSubscription) *SubscriptionResponse {

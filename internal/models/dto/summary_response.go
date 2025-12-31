@@ -7,9 +7,9 @@ import (
 )
 
 type SummaryResponse struct {
-	Sum       int    `json:"sum"`
-	StartDate string `json:"begin_period"`
-	EndDate   string `json:"finish_period"`
+	Sum       int    `json:"sum" example:"1000"`
+	StartDate string `json:"begin_period" example:"08-08-2025"`
+	EndDate   string `json:"finish_period" example:"08-08-2026"`
 }
 
 func FromEntityToSummaryResponse(entitie *entities.GetSummary, sum int) *SummaryResponse {

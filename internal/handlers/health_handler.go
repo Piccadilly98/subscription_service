@@ -20,8 +20,16 @@ func NewHealthHandler(serv *service.Service, ew *errors_checker.ErrorWorker) *He
 	}
 }
 
+// HealthCheck godoc
+// @Summary      Проверка состояния сервиса
+// @Description  Возвращает состояние сервера:<br>•Общий статус сервера("ok" или "Service Unavailable")<br>•Статус базы данных в результате пинга("ok" или "does not respond")<br>•Опциональное поле Error с ошибкой от БД<br><br>Эндпоинт предназначен для мониторинга и health-check'ов.
+// @Tags         monitoring
+// @Produce      json
+// @Success      200 {object} dto.CheckHealth "Состояние сервера"
+// @Success      503 {object} dto.CheckHealth "Сервис недоступен (проблема с базой данных)"
+// @Router       /health-check [get]
 func (h *HealthHandler) Handler(w http.ResponseWriter, r *http.Request) {
-	status := h.serv.CheckHealh(r.Context())
+	status, code := h.serv.CheckHealh(r.Context())
 
 	b, err := json.Marshal(status)
 	if err != nil {
@@ -29,5 +37,6 @@ func (h *HealthHandler) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set(HeaderContentType, HeaderJson)
+	w.WriteHeader(code)
 	w.Write(b)
 }

@@ -53,6 +53,9 @@ func (ew *ErrorWorker) initErrors() {
 	ew.AddNewUserError("cannot update ended subscription", http.StatusConflict)
 	ew.AddNewUserError("can't stop", http.StatusBadRequest)
 	ew.AddNewUserError("invalid user_id", http.StatusNotFound)
+	ew.AddNewUserError("invalid subscribe_id", http.StatusNotFound)
+	ew.AddNewUserError("invalid type subscribe_id", http.StatusBadRequest)
+	ew.AddNewUserError("subscription not found", http.StatusBadRequest)
 
 	//db - user error
 	ew.AddNewDbError("violates foreign key", "invalid request", http.StatusBadRequest)

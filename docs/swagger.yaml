@@ -1,0 +1,333 @@
+basePath: /
+definitions:
+  dto.CheckHealth:
+    properties:
+      db_status:
+        type: string
+      error_text:
+        type: string
+      server_status:
+        type: string
+    type: object
+  dto.CreateSubscriptionsRequest:
+    properties:
+      end_date:
+        example: 12-2025
+        type: string
+      price:
+        example: 400
+        type: integer
+      service_name:
+        example: Yandex Plus
+        type: string
+      start_date:
+        example: 07-2025
+        type: string
+      user_id:
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+    type: object
+  dto.ErrorDTO:
+    properties:
+      date:
+        example: 2025-12-31 00:48:39.814495 +0000 UTC
+        type: string
+      error_text:
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  dto.SubscriptionResponse:
+    properties:
+      end_date:
+        example: 31-12-2030
+        type: string
+      price:
+        example: 400
+        type: integer
+      service_name:
+        example: Yandex Plus
+        type: string
+      start_date:
+        example: 01-07-2025
+        type: string
+      status:
+        example: active
+        type: string
+      subscribe_id:
+        example: b6469ed4-44ae-4436-8827-76131d2d446e
+        type: string
+      user_id:
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+    type: object
+  dto.SummaryResponse:
+    properties:
+      begin_period:
+        example: 08-08-2025
+        type: string
+      finish_period:
+        example: 08-08-2026
+        type: string
+      sum:
+        example: 1000
+        type: integer
+    type: object
+  dto.UpdateSubscriptionRequest:
+    properties:
+      end_date:
+        type: string
+      ended:
+        type: boolean
+      price:
+        type: integer
+    type: object
+externalDocs:
+  description: Test Task By Effective Mobile
+  url: https://disk.360.yandex.ru/i/iT7aYzpZH_-lVg
+host: localhost:8080
+info:
+  contact:
+    email: senior.filippov2017@yandex.ru
+    name: MyResumeHH
+    url: https://hh.ru/resume/875f5df3ff0fbfea5f0039ed1f39506e574431
+  description: REST API для управления данными о подписках пользователей и расчёта
+    их стоимости. Реализован в качестве тестового задания на вакансию junior Goolang
+    для Effective Mobile.
+  termsOfService: https://effective-mobile.ru
+  title: Subscriptions service
+paths:
+  /health-check:
+    get:
+      description: Возвращает состояние сервера:<br>•Общий статус сервера("ok" или
+        "Service Unavailable")<br>•Статус базы данных в результате пинга("ok" или
+        "does not respond")<br>•Опциональное поле Error с ошибкой от БД<br><br>Эндпоинт
+        предназначен для мониторинга и health-check'ов.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Состояние сервера
+          schema:
+            $ref: '#/definitions/dto.CheckHealth'
+        "503":
+          description: Сервис недоступен (проблема с базой данных)
+          schema:
+            $ref: '#/definitions/dto.CheckHealth'
+      summary: Проверка состояния сервиса
+      tags:
+      - monitoring
+  /subscriptions:
+    post:
+      consumes:
+      - application/json
+      description: 'Принимает данные о новой подписке пользователя в формате JSON
+        и выполняет полную валидацию.<br><br>Обязательные поля: service_name, price,
+        user_id, start_date.<br>Поле end_date — опциональное (можно передать null
+        или не указывать).<br><br>Поддерживаемые форматы даты:<br>• "MM-YYYY" (например,
+        "07-2025")<br>• "DD-MM-YYYY" (например, "15-07-2025")<br><br>Хендлер автоматически:<br>•
+        валидирует корректность дат<br>• проверяет, что end_date не раньше start_date
+        (если указана)<br>• приводит обе даты к единому формату "DD-MM-YYYY" (первый
+        день месяца(для стартовой даты и последний день месяца для даты окончания)
+        для формата "MM-YYYY")<br><br>При успешном создании возвращает данные подписки
+        с присвоенным ID и статусом "active", "ended" или "not started" в зависимости
+        от дат которые были в теле запроса<br><br>При ошибке возвращается dto с текстом
+        ошибки и временем ответа.'
+      parameters:
+      - description: Данные подписки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateSubscriptionsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Подписка успешно создана
+          schema:
+            $ref: '#/definitions/dto.SubscriptionResponse'
+        "400":
+          description: Неверные данные запроса
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Создать новую подписку и получить созданную подписку
+      tags:
+      - subscriptions
+  /subscriptions/{id}:
+    delete:
+      description: Удаляет существующую подписку по уникальному идентификатору (UUID).<br><br>Сервис
+        выполняет проверки:<br>• ID не пустой и является валидным UUID<br>• Подписка
+        с таким ID существует<br><br>При успешном удалении возвращается статус 204
+        No Content (без тела).<br><br>Все ошибки возвращаются в формате JSON (ErrorDTO).
+      parameters:
+      - description: ID подписки (UUID)
+        example: b6469ed4-44ae-4436-8827-76131d2d446e
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Подписка успешно удалена
+        "400":
+          description: ID не uuid или пустой
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "404":
+          description: ID не существует
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Удалить существующую подписку
+      tags:
+      - subscriptions
+    get:
+      description: Получает данные по ID подписки(UUID).<br><br>Сервис выполняет проверки:<br>•
+        ID не пустой и является валидным UUID<br>• Подписка с таким ID существует<br><br>При
+        успешном запросе возвращает данные подписки с рассчитанным статусом "active",
+        "ended" или "not started"<br><br>Все ошибки возвращаются в формате JSON(dto.ErrorDTO)
+      parameters:
+      - description: ID подписки (UUID)
+        example: 8b2d4644-5688-47f7-a8b6-7e6d4f55a951
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Подписка успешно получена
+          schema:
+            $ref: '#/definitions/dto.SubscriptionResponse'
+        "400":
+          description: ID не uuid или пустой
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "404":
+          description: ID не существует
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Получить данные подписки
+      tags:
+      - subscriptions
+    put:
+      consumes:
+      - application/json
+      description: Частичное обновление полей подписки по уникальному идентификатору
+        (UUID).<br><br>Сервис выполняет проверки:<br>• ID не пустой и является валидным
+        UUID<br>• Подписка с таким ID существует<br>• Хотя бы одно поле передано для
+        обновления<br>• Изменение завершённой подписки запрещено<br>• Нельзя установить
+        end_date раньше start_date<br>• Нельзя остановить подписку, которая ещё не
+        началась<br>• Цена не может быть меньше или равна нулю<br><br>Опциональные
+        поля в теле запроса:<br>• price — новая месячная стоимость (целое положительное
+        число)<br>• end_date — новая дата окончания (формат "MM-YYYY" или "DD-MM-YYYY",
+        можно null для снятия)<br>• ended — флаг остановки подписки (подписка считается
+        активной в день остановки)<br><br>При успешном обновлении возвращаются актуальные
+        данные подписки.<br><br>Все ошибки возвращаются в едином формате JSON (ErrorDTO).
+      parameters:
+      - description: ID подписки (UUID)
+        example: b6469ed4-44ae-4436-8827-76131d2d446e
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные обновлённой подписки
+          schema:
+            $ref: '#/definitions/dto.SubscriptionResponse'
+        "400":
+          description: Неверные данные запроса
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "404":
+          description: Подписка с указанным ID не найдена
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Обновление данных подписки
+      tags:
+      - subscriptions
+  /subscriptions/summary:
+    get:
+      description: Возвращает общую стоимость всех подписок за указанный период с
+        возможностью фильтрации.<br><br>Обязательные параметры:<br>• start_date —
+        начало периода (формат "MM-YYYY" или "DD-MM-YYYY")<br>• end_date — конец периода
+        (формат "MM-YYYY" или "DD-MM-YYYY")<br><br>Опциональные параметры:<br>• user_id
+        — фильтр по ID пользователя (UUID)<br>• service_name — фильтр по названию
+        сервиса<br><br>Расчёт включает только подписки, начатые в указанном периоде
+        (учитываются пересечения дат).<br>Если период некорректный (end_date раньше
+        start_date или неверный формат) — возвращается ошибка 400.<br><br>Все ошибки
+        возвращаются в едином формате JSON (ErrorDTO).
+      parameters:
+      - description: Начало периода (MM-YYYY)
+        example: 08-07-2025
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: Конец периода (MM-YYYY)
+        example: 12-2025
+        in: query
+        name: end_date
+        required: true
+        type: string
+      - description: Фильтр по ID пользователя
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        in: query
+        name: user_id
+        type: string
+      - description: Фильтр по названию сервиса
+        example: Yandex Plus
+        in: query
+        name: service_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Суммарная стоимость расчитана и возвращется вместе с заданным
+            периодом
+          schema:
+            $ref: '#/definitions/dto.SummaryResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Подсчёт суммарной стоимости подписок
+      tags:
+      - subscriptions
+schemes:
+- http
+swagger: "2.0"
